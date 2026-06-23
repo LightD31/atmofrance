@@ -19,6 +19,7 @@ from .const import (
     POLLUTION_SENSORS,
     POLLEN_ALERT_SENSORS,
     POLLEN_CONC_SENSORS,
+    POLLEN_OCCITANIE_EXTRA_SENSORS,
     CONF_CITY,
     CONF_INSEE_CODE,
     CONF_DATA_SOURCE,
@@ -67,9 +68,14 @@ async def async_setup_entry(
                 AtmoFrancePollutionEntity(hass, entry, sensor_description,
                                           coordinatorpollution, 1))
 
+    # The Atmo Occitanie source exposes extra pollen taxa beyond the national six.
+    pollen_level_sensors = POLLEN_ALERT_SENSORS
+    if data_source == SOURCE_OCCITANIE:
+        pollen_level_sensors = (*POLLEN_ALERT_SENSORS, *POLLEN_OCCITANIE_EXTRA_SENSORS)
+
     if entry.options[CONF_INCLUDE_POLLEN] and CONF_POLLEN_COORDINATOR in config:
         coordinatorpollen = config[CONF_POLLEN_COORDINATOR]
-        for sensor_description in POLLEN_ALERT_SENSORS:
+        for sensor_description in pollen_level_sensors:
             entities.append(AtmoFrancePollenLevelEntity(
                 hass, entry, sensor_description, coordinatorpollen))
         if include_pollen_concentration:
@@ -79,7 +85,7 @@ async def async_setup_entry(
 
     if entry.options[CONF_INCLUDE_POLLEN_FORECAST] and CONF_POLLEN_COORDINATOR in config:
         coordinatorpollen = config[CONF_POLLEN_COORDINATOR]
-        for sensor_description in POLLEN_ALERT_SENSORS:
+        for sensor_description in pollen_level_sensors:
             entities.append(AtmoFrancePollenLevelEntity(
                 hass, entry, sensor_description, coordinatorpollen, 1))
         if include_pollen_concentration:
