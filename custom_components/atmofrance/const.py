@@ -45,6 +45,10 @@ OCCITANIE_POLLEN_URL = (
 
 # The Atmo Occitanie pollen layer only exposes alert levels (no concentration),
 # keyed by latin taxon names. Map them to the json keys used by the sensors.
+# The six core taxa match the national API; the remaining taxa are specific to
+# the Atmo Occitanie source. French slugs are aligned with the pollenprognos-card
+# allergen vocabulary (e.g. niveau_chene -> oak) so the card can display them once
+# its Atmo adapter maps these slugs upstream.
 OCCITANIE_POLLEN_TAXON_MAP = {
     "code_ambr": "AMBROSIA",
     "code_arm": "ARTEMISI",
@@ -53,6 +57,18 @@ OCCITANIE_POLLEN_TAXON_MAP = {
     "code_gram": "GRAMINEE",
     "code_oliv": "OLEA",
     "code_qual": "indice",
+    # Additional taxa, Atmo Occitanie only
+    "code_chene": "QUERCUS",
+    "code_frene": "FRAXINUS",
+    "code_noisetier": "CORYLUS",
+    "code_hetre": "FAGUS",
+    "code_peuplier": "POPULUS",
+    "code_platane": "PLATANUS",
+    "code_ortie": "URTICACE",
+    "code_chenopode": "CHENOP_A",
+    "code_cypres": "CUPRESSA",
+    "code_plantain": "PLANTAGI",
+    "code_saule": "SALIX",
 }
 
 API_GOUV_URL = "https://geo.api.gouv.fr/communes?"
@@ -213,6 +229,45 @@ POLLEN_ALERT_SENSORS: tuple[AtmoFranceSensorEntityDescription, ...] = (
     AtmoFranceSensorEntityDescription(
         key="code_qual", name="Qualité globale Pollen", icon="mdi:gauge", json_key="code_qual"
     ),
+)
+
+# Additional pollen alert levels available only from the Atmo Occitanie source.
+# Entity names are slugified to French allergen slugs (niveau_chene, niveau_frene,
+# ...) aligned with the pollenprognos-card allergen vocabulary.
+POLLEN_OCCITANIE_EXTRA_SENSORS: tuple[AtmoFranceSensorEntityDescription, ...] = (
+    AtmoFranceSensorEntityDescription(
+        key="code_chene", name="Niveau Chêne", device_class=SensorDeviceClass.AQI,
+        icon="mdi:tree", state_class=SensorStateClass.MEASUREMENT, json_key="code_chene"),
+    AtmoFranceSensorEntityDescription(
+        key="code_frene", name="Niveau Frêne", device_class=SensorDeviceClass.AQI,
+        icon="mdi:tree", state_class=SensorStateClass.MEASUREMENT, json_key="code_frene"),
+    AtmoFranceSensorEntityDescription(
+        key="code_noisetier", name="Niveau Noisetier", device_class=SensorDeviceClass.AQI,
+        icon="mdi:tree", state_class=SensorStateClass.MEASUREMENT, json_key="code_noisetier"),
+    AtmoFranceSensorEntityDescription(
+        key="code_hetre", name="Niveau Hêtre", device_class=SensorDeviceClass.AQI,
+        icon="mdi:tree", state_class=SensorStateClass.MEASUREMENT, json_key="code_hetre"),
+    AtmoFranceSensorEntityDescription(
+        key="code_peuplier", name="Niveau Peuplier", device_class=SensorDeviceClass.AQI,
+        icon="mdi:tree", state_class=SensorStateClass.MEASUREMENT, json_key="code_peuplier"),
+    AtmoFranceSensorEntityDescription(
+        key="code_platane", name="Niveau Platane", device_class=SensorDeviceClass.AQI,
+        icon="mdi:tree", state_class=SensorStateClass.MEASUREMENT, json_key="code_platane"),
+    AtmoFranceSensorEntityDescription(
+        key="code_ortie", name="Niveau Ortie", device_class=SensorDeviceClass.AQI,
+        icon="mdi:flower-pollen-outline", state_class=SensorStateClass.MEASUREMENT, json_key="code_ortie"),
+    AtmoFranceSensorEntityDescription(
+        key="code_chenopode", name="Niveau Chénopode", device_class=SensorDeviceClass.AQI,
+        icon="mdi:flower-pollen-outline", state_class=SensorStateClass.MEASUREMENT, json_key="code_chenopode"),
+    AtmoFranceSensorEntityDescription(
+        key="code_cypres", name="Niveau Cyprès", device_class=SensorDeviceClass.AQI,
+        icon="mdi:tree", state_class=SensorStateClass.MEASUREMENT, json_key="code_cypres"),
+    AtmoFranceSensorEntityDescription(
+        key="code_plantain", name="Niveau Plantain", device_class=SensorDeviceClass.AQI,
+        icon="mdi:flower-pollen-outline", state_class=SensorStateClass.MEASUREMENT, json_key="code_plantain"),
+    AtmoFranceSensorEntityDescription(
+        key="code_saule", name="Niveau Saule", device_class=SensorDeviceClass.AQI,
+        icon="mdi:tree", state_class=SensorStateClass.MEASUREMENT, json_key="code_saule"),
 )
 
 POLLEN_CONC_SENSORS: tuple[AtmoFranceSensorEntityDescription, ...] = (

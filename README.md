@@ -66,6 +66,11 @@ Lors de la configuration, vous choisissez d'abord la source des données :
 >
 > Pour les autres régions, utilisez la source Atmo France (API nationale).
 
+> **Note (pollens) :**
+> En plus des six taxons communs aux deux sources (Ambroisie, Armoise, Aulne, Bouleau, Graminées, Olivier), la source **Atmo Occitanie** expose des taxons supplémentaires : Chêne, Frêne, Noisetier, Hêtre, Peuplier, Platane, Ortie, Chénopode, Cyprès, Plantain et Saule.
+>
+> Les entités correspondantes (`sensor.niveau_chene_…`, `sensor.niveau_frene_…`, etc.) sont nommées selon le vocabulaire d'allergènes de [pollenprognos-card](https://github.com/krissen/pollenprognos-card). Elles sont exploitables dès maintenant (cartes, automatisations, modèles) ; leur affichage par pollenprognos-card dépend d'une évolution de l'adaptateur Atmo de cette carte (les six taxons communs y sont déjà pris en charge).
+
 ### Obtenir un accès pour les API Atmo France
 
 > Cette étape concerne uniquement la source **Atmo France (API nationale)**. La source Atmo Occitanie ne demande aucun identifiant.
