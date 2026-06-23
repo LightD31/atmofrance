@@ -8,6 +8,13 @@
         "step": {
             "user": {
                 "data": {
+                    "data_source": "Source de données"
+                },
+                "description": "Choisissez la source de données. « Atmo France » utilise l'API nationale (compte requis). « Atmo Occitanie » utilise le portail open data régional (sans compte, région Occitanie uniquement).",
+                "title": "Source de données"
+            },
+            "credentials": {
+                "data": {
                     "username": "Nom d'utilisateur",
                     "password": "Mot de passe"
                 },

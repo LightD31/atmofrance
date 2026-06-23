@@ -50,7 +50,25 @@ Utilisez [HACS](https://hacs.xyz/).
 
 ## Configuration
 
+### Choix de la source de données
+
+Lors de la configuration, vous choisissez d'abord la source des données :
+
+- **Atmo France (API nationale)** : couvre toute la France. Nécessite un compte (voir ci-dessous).
+- **Atmo Occitanie (open data)** : portail [open data ArcGIS d'Atmo Occitanie](https://data-atmo-occitanie.opendata.arcgis.com/), **sans compte ni identifiants**. Utile notamment lorsque l'API nationale est indisponible.
+
+> [!IMPORTANT]
+> La source **Atmo Occitanie** ne couvre que la **région Occitanie** :
+>
+> - la pollution est fournie au niveau **EPCI** (intercommunalité) ;
+> - les pollens sont fournis au niveau **département** ;
+> - seuls les **niveaux** d'alerte pollen sont disponibles (pas les concentrations en µg/m³).
+>
+> Pour les autres régions, utilisez la source Atmo France (API nationale).
+
 ### Obtenir un accès pour les API Atmo France
+
+> Cette étape concerne uniquement la source **Atmo France (API nationale)**. La source Atmo Occitanie ne demande aucun identifiant.
 
 - Faire une demande de compte sur le [site Atmo France](https://admindata.atmo-france.org/inscription-api),
 - Une fois le compte créé, initialiser le mot de passe via le lien envoyé par mail.
@@ -60,7 +78,7 @@ Utilisez [HACS](https://hacs.xyz/).
 
 La configuration s'effectue via l'interface utilisateur.
 
-Il faut tout d'abord saisir ses [identifiants d'accès](#obtenir-un-accès-pour-les-api-atmo-france) à l'API.
+Il faut tout d'abord choisir la [source de données](#choix-de-la-source-de-données). Avec la source Atmo France, saisir ensuite ses [identifiants d'accès](#obtenir-un-accès-pour-les-api-atmo-france) à l'API.
 
 ![image info](/img/authent.png)
 

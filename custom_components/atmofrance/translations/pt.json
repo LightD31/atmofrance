@@ -7,6 +7,13 @@
         "step": {
             "user": {
                 "data": {
+                    "data_source": "Fonte de dados"
+                },
+                "description": "Escolhe a fonte de dados. 'Atmo France' usa a API nacional (requer conta). 'Atmo Occitanie' usa o portal de dados abertos regional (sem conta, apenas região Occitanie).",
+                "title": "Fonte de dados"
+            },
+            "credentials": {
+                "data": {
                     "username": "Utilizador",
                     "password": "Senha"
                 },

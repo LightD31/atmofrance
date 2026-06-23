@@ -22,6 +22,10 @@ from .const import (
     CONF_CODE_POSTAL,
     CONF_CITY,
     CONF_INSEE_EPCI,
+    CONF_INSEE_DEPT,
+    CONF_DATA_SOURCE,
+    SOURCE_NATIONAL,
+    SOURCE_OCCITANIE,
     CONF_INCLUDE_POLLEN,
     CONF_INCLUDE_POLLEN_FORECAST,
     CONF_INCLUDE_POLLUTION,
@@ -30,6 +34,26 @@ from .const import (
 from .api import AtmoFranceDataApi, INSEEAPI
 
 _LOGGER = logging.getLogger(__name__)
+
+DATA_SOURCE_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_DATA_SOURCE, default=SOURCE_NATIONAL): selector.SelectSelector(
+            selector.SelectSelectorConfig(
+                options=[
+                    selector.SelectOptionDict(
+                        value=SOURCE_NATIONAL,
+                        label="Atmo France (API nationale, compte requis)",
+                    ),
+                    selector.SelectOptionDict(
+                        value=SOURCE_OCCITANIE,
+                        label="Atmo Occitanie (open data, région Occitanie uniquement)",
+                    ),
+                ],
+                mode=selector.SelectSelectorMode.LIST,
+            )
+        ),
+    }
+)
 
 AUTHENT_SCHEMA = vol.Schema(
     {
@@ -111,18 +135,29 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_user(self, user_input=None):
-        """Handle the initial step."""
-        errors = {}
+        """Handle the initial step: choose the data source."""
         _LOGGER.debug("in async_step_user !!")
+        if user_input is not None:
+            self.data = {CONF_DATA_SOURCE: user_input[CONF_DATA_SOURCE]}
+            if user_input[CONF_DATA_SOURCE] == SOURCE_OCCITANIE:
+                # Open data, no credentials required.
+                return await self.async_step_location()
+            return await self.async_step_credentials()
+        return self._show_setup_form("user", user_input, DATA_SOURCE_SCHEMA, {})
+
+    async def async_step_credentials(self, user_input=None):
+        """Handle the Atmo France credentials step (national API only)."""
+        errors = {}
+        _LOGGER.debug("in async_step_credentials !!")
         if user_input is not None:
             try:
                 await validate_credentials(self.hass, user_input)
             except ValueError:
                 errors["base"] = "auth"
             if not errors:
-                self.data = user_input
+                self.data.update(user_input)
                 return await self.async_step_location()
-        return self._show_setup_form("user", user_input, AUTHENT_SCHEMA, errors)
+        return self._show_setup_form("credentials", user_input, AUTHENT_SCHEMA, errors)
 
     async def async_step_location(self, user_input=None):
         """Handle location step"""
@@ -173,6 +208,13 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
         self.data[CONF_INSEE_CODE] = city_infos[0]
         self.data[CONF_CITY] = city_infos[1]
         self.data[CONF_INSEE_EPCI] = city_infos[2]
+        # Département, derived from the INSEE code. Used by the Atmo Occitanie
+        # pollen layer (indexed by département); harmless for the national API.
+        dept = city_infos[0][:2]
+        try:
+            self.data[CONF_INSEE_DEPT] = int(dept)
+        except ValueError:
+            self.data[CONF_INSEE_DEPT] = dept
         return await self.async_step_location(self.data)
 
     async def async_step_sensors_type(self, user_input=None):
@@ -197,8 +239,12 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
                 CONF_INCLUDE_POLLUTION_FORECAST) is not None else False
             self.option[CONF_INCLUDE_POLLEN_FORECAST] = True if user_input.get(
                 CONF_INCLUDE_POLLEN_FORECAST) is not None else False
+            if self.data.get(CONF_DATA_SOURCE) == SOURCE_OCCITANIE:
+                title = f"{TITLE} (Occitanie) - {self.data.get(CONF_CITY)}"
+            else:
+                title = f"{TITLE} - {self.data.get(CONF_CITY)}"
             return self.async_create_entry(
-                title=f"{TITLE} - {self.data.get(CONF_CITY)}", data=self.data, options=self.option
+                title=title, data=self.data, options=self.option
             )
         return self._show_setup_form("forecast_sensor_type", user_input, INCLUDED_FORECAST_SENSOR_SCHEMA, errors)
 

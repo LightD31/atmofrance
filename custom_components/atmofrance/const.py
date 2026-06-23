@@ -24,6 +24,37 @@ class URL_CODE(Enum):
     POLLEN = 122
 
 
+# Data source selection: the national Atmo France API (default) or the
+# Atmo Occitanie ArcGIS open data portal (regional, no authentication).
+CONF_DATA_SOURCE = "data_source"
+SOURCE_NATIONAL = "national"
+SOURCE_OCCITANIE = "occitanie"
+
+# Atmo Occitanie ArcGIS open data (https://data-atmo-occitanie.opendata.arcgis.com).
+# No authentication required, but data only covers the Occitanie region:
+# pollution is indexed by EPCI, pollen by département.
+OCCITANIE_POLLUTION_URL = (
+    "https://services9.arcgis.com/7Sr9Ek9c1QTKmbwr/arcgis/rest/services/"
+    "Indice_quotidien_de_qualit%C3%A9_de_l%E2%80%99air_pour_les_collectivit%C3%A9s_territoriales_en_Occitanie/"
+    "FeatureServer/0"
+)
+OCCITANIE_POLLEN_URL = (
+    "https://services9.arcgis.com/7Sr9Ek9c1QTKmbwr/arcgis/rest/services/"
+    "Indice_Pollens_sur_la_region_Occitanie/FeatureServer/0"
+)
+
+# The Atmo Occitanie pollen layer only exposes alert levels (no concentration),
+# keyed by latin taxon names. Map them to the json keys used by the sensors.
+OCCITANIE_POLLEN_TAXON_MAP = {
+    "code_ambr": "AMBROSIA",
+    "code_arm": "ARTEMISI",
+    "code_aul": "ALNUS",
+    "code_boul": "BETULA",
+    "code_gram": "GRAMINEE",
+    "code_oliv": "OLEA",
+    "code_qual": "indice",
+}
+
 API_GOUV_URL = "https://geo.api.gouv.fr/communes?"
 
 CONF_CODE_POSTAL = "Code postal"
@@ -31,6 +62,7 @@ ATTRIBUTION = "Atmo France"
 MODEL = "Atmo France API"
 CONF_INSEE_CODE = "INSEE"
 CONF_INSEE_EPCI = "INSEE EPCI"
+CONF_INSEE_DEPT = "INSEE DEPT"
 CONF_INCLUDE_POLLUTION = "include_pollution"
 CONF_INCLUDE_POLLEN = "include_pollen"
 CONF_INCLUDE_POLLEN_FORECAST = "include_pollen_forecast"

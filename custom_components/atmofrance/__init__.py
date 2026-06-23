@@ -7,7 +7,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import AtmoFranceDataApi
+from .api import AtmoFranceDataApi, AtmoOccitanieDataApi
 from .const import (
     DOMAIN,
     PLATFORMS,
@@ -15,6 +15,10 @@ from .const import (
     REFRESH_INTERVALL,
     NAME,
     CONF_INSEE_EPCI,
+    CONF_INSEE_DEPT,
+    CONF_DATA_SOURCE,
+    SOURCE_NATIONAL,
+    SOURCE_OCCITANIE,
     CONF_INCLUDE_POLLEN,
     CONF_INCLUDE_POLLUTION,
     CONF_INCLUDE_POLLEN_FORECAST,
@@ -67,58 +71,87 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     if entry.entry_id not in hass.data[DOMAIN]:
         hass.data[DOMAIN][entry.entry_id] = {}
-        source = None
+        data_source = entry.data.get(CONF_DATA_SOURCE, SOURCE_NATIONAL)
+
         if entry.options[CONF_INCLUDE_POLLUTION] or entry.options[CONF_INCLUDE_POLLUTION_FORECAST]:
-            pollutionapi = AtmoFranceDataApi(entry.data, hass=hass)
-            # Get pollution data for city
-            _LOGGER.info("Getting Pollution data")
-            databycity = await pollutionapi.get_data(entry.data[CONF_INSEE_CODE], URL_CODE.POLLUTION)
-            if (
-                databycity is not None and len(databycity) > 0
-            ):  # data exist for city, use it
-                _LOGGER.info("Use City code: %s as  source",
-                             entry.data[CONF_INSEE_CODE])
-                source = CONF_INSEE_CODE
-            else:  # Get data for EPCI (communauté de commune)
+            source = None
+            if data_source == SOURCE_OCCITANIE:
+                # Atmo Occitanie pollution is indexed by EPCI only.
+                _LOGGER.info("Getting Pollution data (Atmo Occitanie)")
+                pollutionapi = AtmoOccitanieDataApi(entry.data, hass=hass)
                 databyepci = await pollutionapi.get_data(entry.data[CONF_INSEE_EPCI], URL_CODE.POLLUTION)
                 if databyepci is not None and len(databyepci) > 0:
                     source = CONF_INSEE_EPCI
-                    _LOGGER.info("Use EPCI code: %s as source",
-                                 entry.data[CONF_INSEE_EPCI])
                 else:
                     _LOGGER.error(
-                        "Impossible de récupérer les données pour la ville %s ou l'EPCI %s",
-                        entry.data[CONF_INSEE_CODE],
-                        entry.data[CONF_INSEE_EPCI],
+                        "Impossible de récupérer les données pollution Atmo Occitanie pour l'EPCI %s",
+                        entry.data.get(CONF_INSEE_EPCI),
                     )
+            else:
+                pollutionapi = AtmoFranceDataApi(entry.data, hass=hass)
+                # Get pollution data for city
+                _LOGGER.info("Getting Pollution data")
+                databycity = await pollutionapi.get_data(entry.data[CONF_INSEE_CODE], URL_CODE.POLLUTION)
+                if (
+                    databycity is not None and len(databycity) > 0
+                ):  # data exist for city, use it
+                    _LOGGER.info("Use City code: %s as  source",
+                                 entry.data[CONF_INSEE_CODE])
+                    source = CONF_INSEE_CODE
+                else:  # Get data for EPCI (communauté de commune)
+                    databyepci = await pollutionapi.get_data(entry.data[CONF_INSEE_EPCI], URL_CODE.POLLUTION)
+                    if databyepci is not None and len(databyepci) > 0:
+                        source = CONF_INSEE_EPCI
+                        _LOGGER.info("Use EPCI code: %s as source",
+                                     entry.data[CONF_INSEE_EPCI])
+                    else:
+                        _LOGGER.error(
+                            "Impossible de récupérer les données pour la ville %s ou l'EPCI %s",
+                            entry.data[CONF_INSEE_CODE],
+                            entry.data[CONF_INSEE_EPCI],
+                        )
             if not (source is None):
                 hass.data[DOMAIN][entry.entry_id][
                     CONF_POLLUTION_COORDINATOR
                 ] = AtmoFrancePollutionApiCoordinator(hass=hass, config=entry, api=pollutionapi, source=source)
 
         if entry.options[CONF_INCLUDE_POLLEN] or entry.options[CONF_INCLUDE_POLLEN_FORECAST]:
-            _LOGGER.info("Getting Pollen data")
-            pollenapi = AtmoFranceDataApi(entry.data, hass=hass)
-
-            databycity = await pollenapi.get_data(entry.data[CONF_INSEE_CODE], URL_CODE.POLLEN)
-            if (
-                databycity is not None and len(databycity) > 0
-            ):  # data exist for city, use it
-                _LOGGER.info("Use City code: %s as  source",
-                             entry.data[CONF_INSEE_CODE])
-                source = CONF_INSEE_CODE
-            else:  # Get data for EPCI (communauté de commune)
-                databyepci = await pollenapi.get_data(entry.data[CONF_INSEE_EPCI], URL_CODE.POLLEN)
-                if databyepci is not None and len(databyepci) > 0:
-                    source = CONF_INSEE_EPCI
-                    _LOGGER.info("Use EPCI code: %s as source",
-                                 entry.data[CONF_INSEE_EPCI])
+            source = None
+            if data_source == SOURCE_OCCITANIE:
+                # Atmo Occitanie pollen is indexed by département only.
+                _LOGGER.info("Getting Pollen data (Atmo Occitanie)")
+                pollenapi = AtmoOccitanieDataApi(entry.data, hass=hass)
+                databydept = await pollenapi.get_data(entry.data[CONF_INSEE_DEPT], URL_CODE.POLLEN)
+                if databydept is not None and len(databydept) > 0:
+                    source = CONF_INSEE_DEPT
                 else:
                     _LOGGER.error(
-                        "Impossible de récupérer les données pour la ville %s ou l'EPCI %s",
-                        entry.data[CONF_INSEE_CODE],
-                        entry.data[CONF_INSEE_EPCI],
+                        "Impossible de récupérer les données pollen Atmo Occitanie pour le département %s",
+                        entry.data.get(CONF_INSEE_DEPT),
                     )
+            else:
+                _LOGGER.info("Getting Pollen data")
+                pollenapi = AtmoFranceDataApi(entry.data, hass=hass)
+
+                databycity = await pollenapi.get_data(entry.data[CONF_INSEE_CODE], URL_CODE.POLLEN)
+                if (
+                    databycity is not None and len(databycity) > 0
+                ):  # data exist for city, use it
+                    _LOGGER.info("Use City code: %s as  source",
+                                 entry.data[CONF_INSEE_CODE])
+                    source = CONF_INSEE_CODE
+                else:  # Get data for EPCI (communauté de commune)
+                    databyepci = await pollenapi.get_data(entry.data[CONF_INSEE_EPCI], URL_CODE.POLLEN)
+                    if databyepci is not None and len(databyepci) > 0:
+                        source = CONF_INSEE_EPCI
+                        _LOGGER.info("Use EPCI code: %s as source",
+                                     entry.data[CONF_INSEE_EPCI])
+                    else:
+                        _LOGGER.error(
+                            "Impossible de récupérer les données pour la ville %s ou l'EPCI %s",
+                            entry.data[CONF_INSEE_CODE],
+                            entry.data[CONF_INSEE_EPCI],
+                        )
             if not (source is None):
                 hass.data[DOMAIN][entry.entry_id][
                     CONF_POLLEN_COORDINATOR
