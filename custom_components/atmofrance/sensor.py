@@ -21,6 +21,9 @@ from .const import (
     POLLEN_CONC_SENSORS,
     CONF_CITY,
     CONF_INSEE_CODE,
+    CONF_DATA_SOURCE,
+    SOURCE_NATIONAL,
+    SOURCE_OCCITANIE,
     CONF_INCLUDE_POLLEN,
     CONF_INCLUDE_POLLEN_FORECAST,
     CONF_INCLUDE_POLLUTION,
@@ -46,38 +49,43 @@ async def async_setup_entry(
     """Configuration"""
     config = hass.data[DOMAIN][entry.entry_id]
     entities = []
+    data_source = entry.data.get(CONF_DATA_SOURCE, SOURCE_NATIONAL)
+    # The Atmo Occitanie open data only exposes pollen alert levels, not concentrations.
+    include_pollen_concentration = data_source != SOURCE_OCCITANIE
 
-    if entry.options[CONF_INCLUDE_POLLUTION]:
+    if entry.options[CONF_INCLUDE_POLLUTION] and CONF_POLLUTION_COORDINATOR in config:
         coordinatorpollution = config[CONF_POLLUTION_COORDINATOR]
         for sensor_description in POLLUTION_SENSORS:
             entities.append(
                 AtmoFrancePollutionEntity(hass, entry, sensor_description,
                                           coordinatorpollution))
 
-    if entry.options[CONF_INCLUDE_POLLUTION_FORECAST]:
+    if entry.options[CONF_INCLUDE_POLLUTION_FORECAST] and CONF_POLLUTION_COORDINATOR in config:
         coordinatorpollution = config[CONF_POLLUTION_COORDINATOR]
         for sensor_description in POLLUTION_SENSORS:
             entities.append(
                 AtmoFrancePollutionEntity(hass, entry, sensor_description,
                                           coordinatorpollution, 1))
 
-    if entry.options[CONF_INCLUDE_POLLEN]:
+    if entry.options[CONF_INCLUDE_POLLEN] and CONF_POLLEN_COORDINATOR in config:
         coordinatorpollen = config[CONF_POLLEN_COORDINATOR]
         for sensor_description in POLLEN_ALERT_SENSORS:
             entities.append(AtmoFrancePollenLevelEntity(
                 hass, entry, sensor_description, coordinatorpollen))
-        for sensor_description in POLLEN_CONC_SENSORS:
-            entities.append(AtmoFrancePollenConcentrationEntity(
-                hass, entry, sensor_description, coordinatorpollen))
+        if include_pollen_concentration:
+            for sensor_description in POLLEN_CONC_SENSORS:
+                entities.append(AtmoFrancePollenConcentrationEntity(
+                    hass, entry, sensor_description, coordinatorpollen))
 
-    if entry.options[CONF_INCLUDE_POLLEN_FORECAST]:
+    if entry.options[CONF_INCLUDE_POLLEN_FORECAST] and CONF_POLLEN_COORDINATOR in config:
         coordinatorpollen = config[CONF_POLLEN_COORDINATOR]
         for sensor_description in POLLEN_ALERT_SENSORS:
             entities.append(AtmoFrancePollenLevelEntity(
                 hass, entry, sensor_description, coordinatorpollen, 1))
-        for sensor_description in POLLEN_CONC_SENSORS:
-            entities.append(AtmoFrancePollenConcentrationEntity(
-                hass, entry, sensor_description, coordinatorpollen, 1))
+        if include_pollen_concentration:
+            for sensor_description in POLLEN_CONC_SENSORS:
+                entities.append(AtmoFrancePollenConcentrationEntity(
+                    hass, entry, sensor_description, coordinatorpollen, 1))
 
     async_add_entities(entities, True)
 
